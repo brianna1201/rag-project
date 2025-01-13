@@ -68,7 +68,7 @@ def fetch_photo_by_date(user_id, date):
         "sort": [
             {
                 "timestamp": {
-                    "order": "asc"
+                    "order": "desc"
                 }
             }
         ],
@@ -102,13 +102,48 @@ def generate_photo_answer(user_id, params):
     if photo_date: # photo 의도에 날짜가 포함된 경우
         photos = fetch_photo_by_date(user_id, photo_date)
         if not photos:
-            answer = f"{photo_date}에 업로드된 사진이 없습니다."
+            log_message = f"{photo_date}에 업로드된 사진이 없습니다."
+            body = {
+                "version": "2.0",
+                "template": {
+                    "outputs": [
+                        {
+                            "simpleText": {
+                                "text": log_message
+                            }
+                        }
+                    ]
+                }
+            }
         else:
-            # 사진 목록을 텍스트로 반환
-            answer = f"{photo_date}에 업로드된 사진입니다:\n"
-            for photo in photos:
-                answer += f"- {photo['photo_url']} ({photo.get('description', '설명 없음')})\n"
+            photo = photos[0]  # 첫 번째 사진
+            log_message = f"{photo_date}에 업로드된 첫 번째 사진을 표시합니다."
+            body = {
+                "version": "2.0",
+                "template": {
+                    "outputs": [
+                        {
+                            "simpleImage": {
+                                "imageUrl": photo['photo_url'],  # 원본 URL 사용
+                                "altText": f"미리보기: {photo.get('description', '설명 없음')}"
+                            }
+                        }
+                    ]
+                }
+            }
     else:
-        # 사진 업로드 처리
-        answer = upload_photo(user_id, photo_url, description)
-    return answer
+        upload_result = upload_photo(user_id, photo_url, description)
+        log_message = upload_result
+        body = {
+            "version": "2.0",
+            "template": {
+                "outputs": [
+                    {
+                        "simpleText": {
+                            "text": log_message  # 업로드 결과 메시지 반환
+                        }
+                    }
+                ]
+            }
+        }
+    return body, log_message

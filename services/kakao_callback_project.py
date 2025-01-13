@@ -1,6 +1,7 @@
 import json
 import shortuuid
 import requests
+import re
 import datetime as dt
 
 from config import *
@@ -148,6 +149,7 @@ def main(event, context):
     # 분석된 의도와 파라미터를 반환
     ##############################################
     def detect_intent(utterance):
+        # OpenAI API를 사용하여 의도 분석
         client = OpenAI()
         messages=[
             {
@@ -158,12 +160,13 @@ def main(event, context):
                 "‘chat’(일반 대화), ‘schedule’(일정 관리), ‘photo’(사진 관리), ‘news’(뉴스 검색) "
                 "사용자의 발화를 바탕으로 의도(intent)와 필요한 매개변수(params)를 JSON 형식으로 응답하세요. "
 
-                "만약 사용자가 jpg, png 등 사진 파일을 업로드했다면, params에는 다음 정보를 포함해야 합니다: "
+                "만약 사용자가 jpg, jpeg, png 등 사진 파일을 업로드했다면, params에는 다음 정보를 포함해야 합니다: "
                 "photo_url (사용자가 업로드한 사진의 URL)과 description (사진과 관련된 설명) "
                 "만약 사용자가 별도의 설명을 제공하지 않았다면 description은 '사용자가 제공하지 않음'으로 설정하세요. "
                 
                 "사용자가 특정 날짜에 업로드한 사진을 요청할 경우, params에는 다음 정보를 포함해야 합니다: "
-                "photo_url (사용자가 업로드한 사진의 URL)과 description (사진과 관련된 설명), photo_date (YYYY-MM-DD 형식의 날짜) "
+                "photo_date (YYYY-MM-DD 형식의 날짜). "
+                "날짜는 '오늘', '내일', '이번주', '다음주'와 같은 자연어 표현도 인식하여 반환하세요."
                 "params가 없을 경우 빈 딕셔너리로 반환하세요."
             )
             },
@@ -193,33 +196,69 @@ def main(event, context):
 
     if intent == 'chat':
         answer = generate_answer(user_id, utterance)
+        body = {
+            "version": "2.0",
+            "template": {
+                "outputs": [
+                    {
+                        "simpleText": {
+                            "text": answer
+                        }
+                    }
+                ]
+            }
+        }
     elif intent == 'photo':
-        answer = generate_photo_answer(user_id, params)
+        body, answer =  generate_photo_answer(user_id, params)
     elif intent == 'schedule':
-        pass
+        answer = "일정 관리 기능은 준비 중입니다."
+        body = {
+            "version": "2.0",
+            "template": {
+                "outputs": [
+                    {
+                        "simpleText": {
+                            "text": answer
+                        }
+                    }
+                ]
+            }
+        }
     elif intent == 'news':
-        pass
+        answer = "뉴스 검색 기능은 준비 중입니다."
+        body = {
+            "version": "2.0",
+            "template": {
+                "outputs": [
+                    {
+                        "simpleText": {
+                            "text": answer
+                        }
+                    }
+                ]
+            }
+        }
     else:
         answer = "죄송해요, 이해하지 못했어요. 다시 말씀해 주세요!"
+        body = {
+            "version": "2.0",
+            "template": {
+                "outputs": [
+                    {
+                        "simpleText": {
+                            "text": answer
+                        }
+                    }
+                ]
+            }
+        }
 
     print(f"[Kakao Callback] Answer: {answer}")
 
     ##############################################
+    # 대화 기록 저장
     upload_chat_history(user_id, 'user', utterance)
     upload_chat_history(user_id, 'assistant', answer)
-
-    body = {
-                'version': '2.0',
-                'template': {
-                    'outputs': [
-                        {
-                            'simpleText': {
-                                'text': answer,
-                            }
-                        }
-                    ],
-                },
-            }
 
     response = {
         "statusCode": 200,
