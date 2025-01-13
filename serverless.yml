@@ -1,0 +1,46 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: byobyo
+service: rag-project
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: linux
+
+provider:
+  name: aws
+  runtime: python3.11
+  stage: dev
+  region: ap-northeast-2
+  timeout: 15 # openai 요청이 오래걸릴 수 있기 때문에
+  environment: # 두칸 띄어쓰기 주의
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+
+package:
+  exclude:
+    - node_modules/**
+    - venv/**
+    - venv-lambda/**
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: /hello
+          method: get
+          cors: true
+  kakao_callback:
+    handler: services.kakao_callback.main
+    events:
+      - http:
+          path: /kakao-callback
+          method: post
+  kakao_callback_project:
+    handler: services.kakao_callback_project.main
+    events:
+      - http:
+          path: /kakao-callback-project
+          method: post

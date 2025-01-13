@@ -1,0 +1,17 @@
+certifi
+charset-normalizer
+idna
+numpy
+pandas
+python-dateutil
+python-dotenv
+pytz
+requests
+six
+urllib3
+xlrd
+openpyxl
+# gensim
+openai
+shortuuid
+pydantic

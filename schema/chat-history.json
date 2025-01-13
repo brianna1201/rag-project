@@ -1,0 +1,19 @@
+{
+    "mappings": {
+        "properties": {
+            "user_id": {
+                "type": "keyword"
+            },
+            "role": {
+                "type": "text"
+            },
+            "text": {
+                "type": "text"
+            },
+            "timestamp": {
+                "type": "date",
+                "format": "date_optional_time"
+            }
+        }
+    }
+}
