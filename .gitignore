@@ -27,4 +27,5 @@ node_modules/
 venv-lambda/
 
 # Configuration files
-config.py
+# config.py # All secrets are now in .env. 
+.env
