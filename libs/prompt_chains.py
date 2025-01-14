@@ -7,7 +7,8 @@ from langchain.chains import LLMChain, SequentialChain
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
-from config import *  # This will ensure environment variables are set
+from config import *
+from libs.translation_handler import translator
 
 # Output parsers for structured responses
 class IntentOutput(BaseModel):
@@ -20,22 +21,22 @@ class PhotoOutput(BaseModel):
     photo_url: str = Field(description="URL of the photo if uploaded")
 
 # Initialize LLM
-llm = ChatOpenAI(model="gpt-4-turbo-preview", temperature=0)
+llm = ChatOpenAI(model=LLM_MODEL_NAME, temperature=LLM_TEMPERATURE)
 
 # Intent detection chain
 intent_parser = PydanticOutputParser(pydantic_object=IntentOutput)
 intent_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are an expert intent classifier for a Korean chatbot system.
+    ("system", """You are an expert intent classifier for a chatbot system.
 Available intents are:
 - chat: General conversation
-- schedule: Schedule management (e.g., "일정 추가해줘", "내일 일정 알려줘")
-- photo: Photo management (e.g., "사진 보여줘", "어제 찍은 사진 보여줘")
-- news: News search (e.g., "오늘 뉴스 보여줘", "주식 뉴스 찾아줘")
+- schedule: Schedule management (e.g., "add schedule", "show tomorrow's schedule")
+- photo: Photo management (e.g., "show photos", "show yesterday's photos")
+- news: News search (e.g., "show today's news", "find stock market news")
 
 For photos:
 - If image file is uploaded, extract photo_url and description
 - If requesting photos by date, extract photo_date in YYYY-MM-DD format
-- Convert relative dates (오늘, 내일, 이번주) to actual dates
+- Convert relative dates (today, tomorrow, this week) to actual dates
 
 {format_instructions}"""),
     ("human", "{utterance}")
@@ -49,7 +50,14 @@ intent_chain = LLMChain(
 
 # Chat response chain with memory
 chat_prompt = ChatPromptTemplate.from_messages([
-    ("system", "네 이름은 자비스야. 너는 친절한 챗봇이야. 아래 질문에 친절하게 대답해줘"),
+    ("system", """You are Jarvis, a friendly chatbot. Always respond in Korean, regardless of the input language.
+Be friendly and helpful in your responses. Maintain a natural, conversational tone in Korean.
+
+Example responses:
+- Greeting: "안녕하세요! 저는 자비스예요. 무엇을 도와드릴까요?"
+- Help request: "네, 말씀해 주세요. 제가 도와드리겠습니다."
+- Confirmation: "알겠습니다. 바로 처리해드릴게요."
+"""),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{utterance}")
 ])
@@ -68,8 +76,11 @@ chat_chain = LLMChain(
 
 def detect_intent(utterance: str) -> Tuple[str, Dict]:
     """Detect intent from user utterance"""
+    # Translate if needed
+    translated_text, was_translated = translator.process_text(utterance)
+    
     result = intent_chain.invoke({
-        "utterance": utterance,
+        "utterance": translated_text,
         "format_instructions": intent_parser.get_format_instructions()
     })
     
@@ -78,18 +89,27 @@ def detect_intent(utterance: str) -> Tuple[str, Dict]:
 
 def generate_chat_response(user_id: str, utterance: str, chat_history: List[Dict]) -> str:
     """Generate chat response with memory"""
+    # Translate if needed
+    translated_text, was_translated = translator.process_text(utterance)
+    
     # Convert chat history to messages format
     for chat in chat_history:
+        # Translate historical messages if they're in Korean
+        if chat["role"] == "user":
+            hist_text, _ = translator.process_text(chat["text"])
+        else:
+            hist_text = chat["text"]
+            
         chat_memory.save_context(
-            {"input": chat["text"] if chat["role"] == "user" else ""},
-            {"output": chat["text"] if chat["role"] == "assistant" else ""}
+            {"input": hist_text if chat["role"] == "user" else ""},
+            {"output": hist_text if chat["role"] == "assistant" else ""}
         )
     
     result = chat_chain.invoke({
-        "utterance": utterance
+        "utterance": translated_text
     })
     
-    return result["response"]
+    return result["response"]  # Response will be in Korean due to system prompt
 
 def process_user_message(user_id: str, utterance: str, chat_history: List[Dict]) -> Tuple[str, Dict]:
     """Main entry point for processing user messages"""

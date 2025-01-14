@@ -19,3 +19,6 @@ langchain
 langchain-openai
 langchain-community
 pytest
+transformers
+torch
+sentencepiece  # Required for MarianMT tokenizer
