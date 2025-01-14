@@ -47,6 +47,14 @@ OPENSEARCH_HEADERS = {
     "Content-Type": "application/json",
 }
 
+# Translation Configuration
+KOREAN_DETECTION_THRESHOLD = 0.5  # Ratio of Korean characters to consider text as Korean
+TRANSLATION_MODEL_NAME = "Helsinki-NLP/opus-mt-ko-en"  # MarianMT model for Korean to English translation
+
+# LLM Configuration
+LLM_MODEL_NAME = "gpt-4o-mini"  # OpenAI model to use
+LLM_TEMPERATURE = 0  # Temperature for LLM responses
+
 # Available OpenSearch indices used in the application:
 # - chat-history: Stores chat history between users and the chatbot
 # - user-photos: Stores user uploaded photos
