@@ -7,6 +7,7 @@ import datetime as dt
 from config import *
 from openai import OpenAI
 from libs.photo import generate_photo_answer
+from libs.schedule import generate_schedule_answer
 
 ##############################################
 # OpenSearch 데이터 업로드
@@ -19,7 +20,7 @@ from libs.photo import generate_photo_answer
 # : 사용자의 사진 업로드
 # libs > photo.py에 구현
 # --------------------------------------------
-#TODO 3) upload_schedule
+# 3) upload_schedule
 # : 사용자의 일정 업로드
 # libs > schedule.py에 구현
 # --------------------------------------------
@@ -211,7 +212,7 @@ def main(event, context):
     elif intent == 'photo':
         body, answer =  generate_photo_answer(user_id, params)
     elif intent == 'schedule':
-        answer = "일정 관리 기능은 준비 중입니다."
+        answer = generate_schedule_answer(user_id, utterance)
         body = {
             "version": "2.0",
             "template": {
