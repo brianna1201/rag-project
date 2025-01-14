@@ -15,3 +15,7 @@ openpyxl
 openai
 shortuuid
 pydantic
+langchain
+langchain-openai
+langchain-community
+pytest
