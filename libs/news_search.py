@@ -13,8 +13,6 @@ def make_basic_query(text):
             )
     embed = resp.data[0].embedding
 
-    # semantic search
-    ## 돈 아끼기...(입문자용)
     query = {
         "query": {
             "knn" : {
@@ -144,18 +142,4 @@ def generate_answer(topics, utterance):
 def answer_news_search(utterance):
     topics = semantic_search(utterance) # 사용자 발화를 바탕으로 semantic search를 통해 관련 기사를 가져옴
     answer = generate_answer(topics, utterance) # 가져온 기사를 바탕으로 답변 생성
-
-    body = {
-                'version': '2.0',
-                'template': {
-                    'outputs': [
-                        {
-                            'simpleText': {
-                                # 'text': f'{utterance} 라고 말했지?',
-                                'text': answer,
-                            }
-                        }
-                    ],
-                },
-            }
-    return body
+    return answer

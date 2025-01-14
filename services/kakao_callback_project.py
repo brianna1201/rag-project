@@ -6,6 +6,7 @@ import datetime as dt
 from config import *
 from libs.photo import generate_photo_answer
 from libs.schedule import generate_schedule_answer
+from libs.news_search import answer_news_search
 from libs.prompt_chains import process_user_message, detect_intent
 
 def upload_chat_history(user_id, role, text):
@@ -95,7 +96,7 @@ def main(event, context):
             }
         }
     elif intent == 'news':
-        response = "뉴스 검색 기능은 준비 중입니다."
+        response = answer_news_search(utterance)
         body = {
             "version": "2.0",
             "template": {
